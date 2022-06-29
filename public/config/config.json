@@ -1,0 +1,18 @@
+{
+  "CONTRACT_ADDRESS": "0xcae06e7b36cbb3bce19f41640f1104e99f5395f4",
+  "SCAN_LINK": "https://cronoscan.com/address/0xcae06e7b36cbb3bce19f41640f1104e99f5395f4",
+  "NETWORK": {
+    "NAME": "Binance Smart Chain",
+    "SYMBOL": "BNB",
+    "ID": 56
+  },
+  "NFT_NAME": "Ronaldo Reward NFT",
+  "SYMBOL": "RCR7 NFT",
+  "MAX_SUPPLY": 7000,
+  "WEI_COST": 150000000000000000,
+  "DISPLAY_COST": 0.15,
+  "GAS_LIMIT": 285000,
+  "MARKETPLACE": "",
+  "MARKETPLACE_LINK": "",
+  "SHOW_BACKGROUND": true
+}
