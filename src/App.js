@@ -11,41 +11,9 @@ import { ethers, providers } from "ethers";
 
 // Contract
 import SmartContract from "./ABI/contract.json";
+import { async } from "q";
 
 const SmartContractAddress = "0xcae06e7b36cbb3bce19f41640f1104e99f5395f4";
-
-const settings = {
-  className: "center",
-  centerMode: true,
-  infinite: true,
-  centerPadding: "30px",
-  slidesToShow: 3,
-  speed: 500,
-  dots: true,
-  lazyLoad: true,
-  responsive: [
-    {
-      breakpoint: 700,
-      settings: {
-        slidesToShow: 2,
-        slidesToScroll: 1,
-        initialSlide: 2,
-        dots: true,
-      }
-    },
-    {
-      breakpoint: 480,
-      settings: {
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        dots: true,
-      }
-    }
-  ]
-};
-
-const truncate = (input, len) =>
-  input.length > len ? `${input.substring(0, len)}...` : input;
 
 export const StyledButton = styled.button`
   padding: 10px;
@@ -92,15 +60,14 @@ export const StyledRoundButton = styled.button`
   }
 `;
 export const StyledRoundButton2 = styled.button`
-  padding: 10px;
   border-radius: 100%;
   border: none;
-  padding: 10px;
+  padding: 8px;
   font-weight: bold;
   font-size: 15px;
   color: var(--primary-text);
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
   display: flex;
   margin-left: 10px;
@@ -155,7 +122,7 @@ function App() {
   const [claimingNft, setClaimingNft] = useState(false);
   const [userNFT, setUserNFT] = useState([]);
   const [loadingNft, setloadingNft] = useState(false);
-  const [userAddress, setUserAddress] = useState();
+  const [connected, setConnected] = useState();
   const [feedback, setFeedback] = useState(`Click buy to mint your NFT.`);
   const [mintAmount, setMintAmount] = useState(1);
   const [CONFIG, SET_CONFIG] = useState({
@@ -177,20 +144,7 @@ function App() {
     SHOW_BACKGROUND: false,
   });
 
-  const [connected, setConnected] = useState(false);
-  const [totalSupply, setTotalSupply] = useState();
-  const [provider, setProvider] = useState();
 
-  const cnx = (data) => {
-    setConnected(data);
-  }
-  const providerProp = (data) => {
-    setProvider(data);
-  }
-
-  const userAddressProp = (data) => {
-    setUserAddress(data);
-  }
   const decrementMintAmount = () => {
     let newMintAmount = mintAmount - 1;
     if (newMintAmount < 1) {
@@ -221,22 +175,15 @@ function App() {
       },
     });
     const config = await configResponse.json();
+    console.log("config", config)
     SET_CONFIG(config);
   };
 
   const getNFTData = async () => {
     try {
       const allUserNfts = [];
-      if (provider) {
-        const signer = provider.getSigner();
-      }
-      setloadingNft(true);
-      const contract = new ethers.Contract(
-        SmartContractAddress,
-        SmartContract,
-        signer
-      );
-      const ownerTokens = await contract.walletOfOwner(userAddress)
+      const ownerTokens = await blockchain.smartContract
+        .walletOfOwner(blockchain.account);
       for (let i = 0; i < ownerTokens.length; i++) {
         let uri = await fetch(
           `https://ipfs.io/ipfs/QmdwD6zxJcmSeDqGXGbFGU19JRgLfESVQC2naxXL2GCU1d/${ownerTokens[i]}.json`
@@ -259,20 +206,15 @@ function App() {
 
   useEffect(() => {
     getData();
-  }, [userAddress]);
-
-  useEffect(() => {
-    /*
-     * We only want to run this, if we have a connected wallet
-     */
-    if (userAddress) {
-      console.log("CurrentAccount:", userAddress);
+    setConnected(blockchain.connected)
+    if (blockchain.account) {
+      console.log("CurrentAccount:", blockchain.account);
       getNFTData();
     }
-  }, [userAddress]);
+  }, [blockchain.account]);
 
 
-  function toFixed(x) {
+  const toFixed = (x) => {
     if (Math.abs(x) < 1.0) {
       var e = parseInt(x.toString().split('e-')[1]);
       if (e) {
@@ -289,67 +231,33 @@ function App() {
     }
     return x;
   }
-  const getMintCost = async () => {
-    const signer = provider.getSigner();
 
-    const contract = new ethers.Contract(
-      SmartContractAddress,
-      SmartContract,
-      signer
-    );
 
-    const mintCost = await contract.cost();
+  const claimNFTs = async () => {
 
-    return mintCost.toString();
-  };
-
-  const mint = async () => {
     try {
-      const signer = provider.getSigner();
-
-      const contract = new ethers.Contract(
-        SmartContractAddress,
-        SmartContract,
-        signer
-      );
-
-      const mintCost = await getMintCost();
-
-      console.log(mintCost, mintAmount);
-
-      const addy = await signer.getAddress();
-      const fullCost = toFixed(mintCost * mintAmount);
-      console.log(mintCost, mintAmount, addy);
-      console.log(fullCost);
-      await contract.mint(addy, mintAmount, {
-        value: (fullCost).toString(),
-      });
-    } catch (err) {
-      console.log(err);
-      alert(err);
+      let cost = data.cost.toString();
+      console.log(cost)
+      let gasLimit = CONFIG.GAS_LIMIT;
+      let totalCostWei = toFixed(cost * mintAmount);
+      let totalGasLimit = String(gasLimit * mintAmount);
+      console.log("Cost: ", totalCostWei);
+      console.log("Gas limit: ", totalGasLimit);
+      setFeedback(`Minting your ${CONFIG.NFT_NAME}...`);
+      setClaimingNft(true);
+      await blockchain.smartContract
+        .mint(blockchain.account, mintAmount, {
+          gasLimit: String(totalGasLimit),
+          value: String(totalCostWei),
+        });
+      setClaimingNft(false);
+    } catch (error) {
+      console.log(error);
+      setClaimingNft(false);
     }
     await getNFTData();
   };
 
-  const getAmountMinted = async () => {
-    const provider = new ethers.providers.JsonRpcProvider(
-      "https://evm-cronos.crypto.org/"
-    );
-
-    const contract = new ethers.Contract(
-      SmartContractAddress,
-      SmartContract,
-      provider
-    );
-
-    const cost = await contract.totalSupply();
-
-    setTotalSupply(cost.toString());
-  };
-
-  useEffect(() => {
-    getAmountMinted();
-  }, []);
 
   const renderNFTs = () =>
     loadingNft ? (
@@ -388,20 +296,20 @@ function App() {
         image={CONFIG.SHOW_BACKGROUND ? "/config/images/bg.png" : null}
         image2={CONFIG.SHOW_BACKGROUND ? "/config/images/bg2.png" : null}
       >
-        <NavBar func={cnx} prov={providerProp} usrAdd={userAddressProp} />
+        <NavBar />
 
         <s.SpacerLarge />
         <div className="cr_row">
-              <div className="cr_column">
-                <img src="/config/images/Real Madrid.jpg" />
-              </div>
-              <div className="cr_column">
-                <img src="/config/images/Juventus.jpg" />
-              </div>
-              <div className="cr_column">
-                <img src="/config/images/Manchester United.jpg" />
-              </div>
-            </div>
+          <div className="cr_column">
+            <img src="/config/images/Real Madrid.jpg" />
+          </div>
+          <div className="cr_column">
+            <img src="/config/images/Juventus.jpg" />
+          </div>
+          <div className="cr_column">
+            <img src="/config/images/Manchester United.jpg" />
+          </div>
+        </div>
         <ResponsiveWrapper flex={1} style={{ padding: 24 }} test>
           <s.SpacerLarge />
           <s.Container
@@ -490,7 +398,7 @@ function App() {
                         disabled={claimingNft ? 1 : 0}
                         onClick={(e) => {
                           e.preventDefault();
-                          mint();
+                          claimNFTs();
                           getData();
                         }}>
                         <span className="kave-line"></span>
@@ -501,20 +409,25 @@ function App() {
                 )}
               </>
             )}
-            <s.SpacerMedium />
           </s.Container>
           <s.SpacerLarge />
         </ResponsiveWrapper>
-        <s.SpacerMedium />
+        <hr style={{
+          color: '#000000',
+          backgroundColor: '#000000',
+          height: '5px',
+          borderColor: '#000000',
+          width:'100%'
+        }} />
+        <s.SpacerLarge />
         <s.Container flex={1} jc={"center"} ai={"center"} fd={"row"}>
           <h2 style={{
             fontSize: '35px',
             fontWeight: 'bold',
-            color: 'var(--accent-text)',
-            border: '6px solid',
-            padding: '15px',
-            background: '#ffffff7d'
-          }}>Your Collection 👽 </h2>
+            borderBottom: '6px solid var(--primary)',
+            borderRadius: '4px'
+
+          }}>Your Collection </h2>
           <StyledRoundButton2
             onClick={(e) => {
               e.preventDefault();
@@ -523,7 +436,7 @@ function App() {
           >
             <svg
               className="icon"
-              height="24"
+              height="20"
               viewBox="0 0 24 24"
               width="24"
               xmlns="http://www.w3.org/2000/svg"
