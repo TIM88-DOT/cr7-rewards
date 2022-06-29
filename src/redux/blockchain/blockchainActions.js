@@ -1,6 +1,6 @@
-// constants
-import Web3EthContract from "web3-eth-contract";
-import Web3 from "web3";
+import { ethers, providers } from "ethers";
+import Web3Modal from "web3modal";
+import WalletConnectProvider from "@walletconnect/web3-provider";
 // log
 import { fetchData } from "../data/dataActions";
 
@@ -48,38 +48,52 @@ export const connect = () => {
       },
     });
     const CONFIG = await configResponse.json();
-    const { ethereum } = window;
-    const metamaskIsInstalled = ethereum && ethereum.isMetaMask;
-    if (metamaskIsInstalled) {
-      Web3EthContract.setProvider(ethereum);
-      let web3 = new Web3(ethereum);
+    const providerOptions = {
+      walletconnect: {
+        package: WalletConnectProvider, // required
+        options: {
+          chainId: 25,
+          rpc: {
+            25: "https://evm-cronos.crypto.org/",
+          },
+        },
+      },
+
+      injected: {
+        display: {
+          logo: "https://github.com/MetaMask/brand-resources/raw/master/SVG/metamask-fox.svg",
+          name: "MetaMask",
+          description: "Connect with MetaMask in your browser",
+        },
+        package: null,
+      },
+    };
+    const web3Modal = new Web3Modal({
+      cacheProvider: false, // optional
+      providerOptions, // required
+    });
+
+    const connection = await web3Modal.connect();
+
+    if (connection) {
+      const provider = new ethers.providers.Web3Provider(connection);
+      const signer = provider.getSigner();
+      const account = await signer.getAddress();
+      const networkId =  await signer.getChainId();
       try {
-        const accounts = await ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        const networkId = await ethereum.request({
-          method: "net_version",
-        });
         if (networkId == CONFIG.NETWORK.ID) {
-          const SmartContractObj = new Web3EthContract(
+          const SmartContractObj = new ethers.Contract(
+            CONFIG.CONTRACT_ADDRESS,
             abi,
-            CONFIG.CONTRACT_ADDRESS
+            signer
           );
           dispatch(
             connectSuccess({
-              account: accounts[0],
+              account: account,
               smartContract: SmartContractObj,
-              web3: web3,
+              connected: true
             })
           );
-          // Add listeners start
-          ethereum.on("accountsChanged", (accounts) => {
-            dispatch(updateAccount(accounts[0]));
-          });
-          ethereum.on("chainChanged", () => {
-            window.location.reload();
-          });
-          // Add listeners end
         } else {
           dispatch(connectFailed(`Change network to ${CONFIG.NETWORK.NAME}.`));
         }

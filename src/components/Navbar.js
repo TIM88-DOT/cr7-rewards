@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { ethers, providers } from "ethers";
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import { useDispatch, useSelector } from "react-redux";
+import { connect, startUp } from "../redux/blockchain/blockchainActions";
 import * as s from "../styles/globalStyles";
 import "./Navbar.css";
 
 
- const NavBar = (props) => {
+ const NavBar = () => {
     const [click, setClick] = useState(false);
     const [provider, setProvider] = useState();
     const [web3modal, setWeb3modal] = useState();
@@ -14,67 +16,74 @@ import "./Navbar.css";
     const [userAddress, setUserAddress] = useState();
     const [account, setAccount] = useState("Connect Wallet");
     const [signer, setSigner] = useState();
-
+    const blockchain = useSelector((state) => state.blockchain);
     const handleClick = () => setClick(!click);
     const Close = () => setClick(false);
-    props.func(connected)
-    props.prov(provider)
-    props.usrAdd(userAddress)
 
     useEffect(() => {
-        console.log("account = , connected", userAddress);
-        connected && userAddress
-            ? setAccount(userAddress.slice(2, 6) + "..." + userAddress.slice(38, 42))
-            : setAccount("Connect Wallet");
-    }, [userAddress, connected]);
-
-    const handleConnection = async () => {
-        const providerOptions = {
-            walletconnect: {
-                package: WalletConnectProvider, // required
-                options: {
-                    chainId: 25,
-                    rpc: {
-                        25: "https://evm-cronos.crypto.org/",
-                    },
-                },
-            },
-
-            injected: {
-                display: {
-                    logo: "https://github.com/MetaMask/brand-resources/raw/master/SVG/metamask-fox.svg",
-                    name: "MetaMask",
-                    description: "Connect with MetaMask in your browser",
-                },
-                package: null,
-            },
-        };
-
-        const web3Modal = new Web3Modal({
-            cacheProvider: false, // optional
-            providerOptions, // required
-        });
-
-        if (connected) {
-            web3Modal.clearCachedProvider();
-            window.location.reload();
-            //   await getNFTData();
-            setProvider("");
-            setWeb3modal("");
-            setConnected(false);
-            setSigner("");
-            setUserAddress("");
-        } else {
-            const connection = await web3Modal.connect();
-            const provider = new ethers.providers.Web3Provider(connection);
-            const signer = provider.getSigner();
-            const addy = await signer.getAddress();
-            setWeb3modal(web3Modal);
-            setProvider(provider);
-            setSigner(signer);
-            setUserAddress(addy);
-            setConnected(true);
+        let account = blockchain.account;
+        console.log("account = , connected", account, blockchain.connected);
+        setConnected(blockchain.connected);
+        let address = account
+            ? account.slice(2, 6) + "..." + account.slice(38, 42)
+            : "Connect Wallet";
+        if (blockchain.connected) {
+            setAccount(address);
         }
+        // dispatch(startUp());
+      }, [blockchain]);
+    
+
+    const dispatch = useDispatch();
+    const handleConnection = async (e) => {
+        dispatch(connect());
+
+        // const providerOptions = {
+        //     walletconnect: {
+        //         package: WalletConnectProvider, // required
+        //         options: {
+        //             chainId: 25,
+        //             rpc: {
+        //                 25: "https://evm-cronos.crypto.org/",
+        //             },
+        //         },
+        //     },
+
+        //     injected: {
+        //         display: {
+        //             logo: "https://github.com/MetaMask/brand-resources/raw/master/SVG/metamask-fox.svg",
+        //             name: "MetaMask",
+        //             description: "Connect with MetaMask in your browser",
+        //         },
+        //         package: null,
+        //     },
+        // };
+
+        // const web3Modal = new Web3Modal({
+        //     cacheProvider: false, // optional
+        //     providerOptions, // required
+        // });
+
+        // if (connected) {
+        //     web3Modal.clearCachedProvider();
+        //     window.location.reload();
+        //     //   await getNFTData();
+        //     setProvider("");
+        //     setWeb3modal("");
+        //     setConnected(false);
+        //     setSigner("");
+        //     setUserAddress("");
+        // } else {
+        //     const connection = await web3Modal.connect();
+        //     const provider = new ethers.providers.Web3Provider(connection);
+        //     const signer = provider.getSigner();
+        //     const addy = await signer.getAddress();
+        //     setWeb3modal(web3Modal);
+        //     setProvider(provider);
+        //     setSigner(signer);
+        //     setUserAddress(addy);
+        //     setConnected(true);
+        // }
     };
 
     return (
