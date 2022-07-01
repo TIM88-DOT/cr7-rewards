@@ -184,16 +184,20 @@ function App() {
       const allUserNfts = [];
       const ownerTokens = await blockchain.smartContract
         .walletOfOwner(blockchain.account);
+        setloadingNft(true);
+        console.log("owner nfts",ownerTokens)
       for (let i = 0; i < ownerTokens.length; i++) {
         let uri = await fetch(
-          `https://ipfs.io/ipfs/QmdwD6zxJcmSeDqGXGbFGU19JRgLfESVQC2naxXL2GCU1d/${ownerTokens[i]}.json`
+          `https://ipfs.io/ipfs/QmZExFZu9gF4jFQEAniLxwK26QzFaDS7KQaaxrtq6wLQHU/${ownerTokens[i]}.json`
         );
+        console.log(uri)
         let uriJson = await uri.json();
         uriJson.image = uriJson.image.replace(":/", "");
         allUserNfts.push(uriJson);
       }
       setloadingNft(false);
       setUserNFT(allUserNfts);
+      console.log(allUserNfts);
     } catch (err) {
       setloadingNft(false);
       console.log(err);
@@ -412,14 +416,6 @@ function App() {
           </s.Container>
           <s.SpacerLarge />
         </ResponsiveWrapper>
-        <hr style={{
-          color: '#000000',
-          backgroundColor: '#000000',
-          height: '5px',
-          borderColor: '#000000',
-          width:'100%'
-        }} />
-        <s.SpacerLarge />
         <s.Container flex={1} jc={"center"} ai={"center"} fd={"row"}>
           <h2 style={{
             fontSize: '35px',
