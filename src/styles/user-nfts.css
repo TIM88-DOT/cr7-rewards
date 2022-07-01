@@ -67,12 +67,7 @@
     flex-wrap: wrap;
   }
   
-  @media (max-width: 1000px) {
-    .nft-container {
-      flex: 100%!important;
-      flex-direction: column!important;
-    }
-  }
+
   .players-container{
       padding: 0 15px;
   }
@@ -174,12 +169,23 @@
   display: flex;
   width: 100%;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .cr_column {
-  flex: 33.33%;
-  padding-inline: 40px;
+  height: 400px;
+  margin: 20px;
+  flex: 0 1 350px
+
 } 
 .cr_column img{
   width: 100%;
 }
+
+@media (max-width: 1000px) {
+  .nft-container {
+    flex: 100%!important;
+    flex-direction: column!important;
+  }
+}
+
