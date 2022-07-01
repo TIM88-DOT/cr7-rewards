@@ -1,10 +1,10 @@
 {
-  "CONTRACT_ADDRESS": "0xcae06e7b36cbb3bce19f41640f1104e99f5395f4",
-  "SCAN_LINK": "https://cronoscan.com/address/0xcae06e7b36cbb3bce19f41640f1104e99f5395f4",
+  "CONTRACT_ADDRESS": "",
+  "SCAN_LINK": "",
   "NETWORK": {
     "NAME": "Binance Smart Chain",
     "SYMBOL": "BNB",
-    "ID": 25
+    "ID": 97
   },
   "NFT_NAME": "Ronaldo Reward NFT",
   "SYMBOL": "RCR7 NFT",

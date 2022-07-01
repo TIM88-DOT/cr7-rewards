@@ -52,9 +52,9 @@ export const connect = () => {
       walletconnect: {
         package: WalletConnectProvider, // required
         options: {
-          chainId: 25,
+          chainId: 97,
           rpc: {
-            25: "https://evm-cronos.crypto.org/",
+            97: "https://data-seed-prebsc-1-s1.binance.org:8545/",
           },
         },
       },
