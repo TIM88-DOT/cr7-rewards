@@ -52,6 +52,9 @@ export const Container = styled.div`
   width: 100%;
   background-image: ${({ image,image2 }) => (`url(${image}) ,url(${image2})`)};
   background-position: right, top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 `;
 
 export const TextTitle = styled.p`
